@@ -1,0 +1,7 @@
+# Project-specific files
+.clang-format
+out/
+**/.env*
+include/conan/
+.vscode/
+build/

@@ -1,0 +1,8 @@
+[requires]
+nlohmann_json/3.9.1
+websocketpp/0.8.2
+serial/1.2.1
+boost/1.75.0
+
+[generators]
+cmake
