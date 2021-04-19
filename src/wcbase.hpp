@@ -1,13 +1,9 @@
 ﻿#pragma once
 
-#include "nlohmann/json.hpp"
-#include "websocketpp/client.hpp"
-#include "websocketpp/config/asio_no_tls_client.hpp"
+#include "lib/json_helpers.hpp"
+#include "lib/socket_helpers.hpp"
 
-#include <fstream>
 #include <iostream>
-#include <stdexcept>
-#include <string>
 
 #if defined(WIN32) || defined(_WIN32) || \
     defined(__WIN32) && !defined(__CYGWIN__)
