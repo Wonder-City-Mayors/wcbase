@@ -9,21 +9,34 @@ int main(int argc, char* argv[]) {
     std::unique_ptr<nlohmann::json> env;
 
     try {
-        env = std::unique_ptr<nlohmann::json>(check_dotenv());
+        env = std::unique_ptr(bootstrap::check_dotenv());
     } catch (std::exception& e) {
         std::cerr << e.what() << '\n';
         return 0;
     }
 
-    socket_endpoint endpoint;
+    auto const socket_uri = (*env)["socket_uri"];
 
-    endpoint.connect((*env)["uri"]);
+    if (socket_uri.is_null()) {
+        std::cerr << "No 'socket_uri' provided in .env.json\n";
+        return 0;
+    }
+
+    std::string jwt;
+
+    try {
+        jwt = bootstrap::get_jwt(*env);
+    } catch (std::exception const& e) {
+        std::cerr << "Error: " << e.what() << '\n';
+        return 0;
+    }
+
+    socket_endpoint endpoint;
 
     endpoint.set_on_connect_listener([&endpoint]() {
         if (endpoint.get_metadata()->get_status() !=
             connection_metadata::connection_status::open) {
-            std::cerr << "Couldn't connect to specified 'uri' from .env.json.\n"
-                         "Or maybe you just forgot to set it? ;)\n";
+            std::cerr << "Couldn't connect to specified 'uri'\n";
             endpoint.close();
             return;
         }
@@ -32,7 +45,7 @@ int main(int argc, char* argv[]) {
 
         endpoint.close();
     });
-
+    endpoint.connect(socket_uri, jwt);
     endpoint.join();
 
     return 0;

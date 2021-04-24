@@ -55,7 +55,6 @@ class connection_metadata {
         status          = closed;
         server          = connection->get_response_header("Server");
         error_reason    = connection->get_ec().message();
-        
     }
 };
 
@@ -86,7 +85,7 @@ class socket_endpoint {
         delete on_connect;
     }
 
-    auto connect(std::string const& uri) {
+    auto connect(std::string const& uri, std::string const& jwt = "") {
         std::error_code err;
 
         socket_client::connection_ptr connection =
@@ -109,6 +108,11 @@ class socket_endpoint {
                       this,
                       websocketpp::lib::placeholders::_1));
 
+        if (!jwt.empty()) {
+            connection->append_header("Authorization",
+                                      std::string("Bearer ") + jwt);
+        }
+
         endpoint.connect(connection);
 
         return 1;
@@ -119,7 +123,7 @@ class socket_endpoint {
 
         endpoint.stop_perpetual();
         endpoint.close(metadata->get_handle(), code, "", error_code);
-        
+
         metadata = nullptr;
     }
 
@@ -135,7 +139,7 @@ class socket_endpoint {
         thread->join();
     }
 
-    private:
+   private:
     void on_open(websocketpp::connection_hdl arg_handle) {
         this->metadata->on_open(&this->endpoint, arg_handle);
 
