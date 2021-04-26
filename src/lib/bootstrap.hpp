@@ -34,13 +34,14 @@ namespace bootstrap {
         }
 
         nlohmann::json body;
-        body["username"] = env["username"];
+        body["id"]       = env["id"].get<int>();
         body["password"] = env["password"];
 
         httplib::Client client(static_cast<std::string>(api_uri).c_str());
 
-        auto res = client.Post("/auth/signIn", body.dump(), "application/json");
-        body     = nlohmann::json::parse(res->body);
+        auto res =
+            client.Post("/auth/signStation", body.dump(), "application/json");
+        body = nlohmann::json::parse(res->body);
 
         if (res->status != 200) {
             throw std::runtime_error(body["message"].dump());
