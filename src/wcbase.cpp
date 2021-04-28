@@ -5,6 +5,7 @@ int main(int argc, char* argv[]) {
     defined(__WIN32) && !defined(__CYGWIN__)
     SetConsoleOutputCP(CP_UTF8);
 #endif
+    bootstrap::setup_random();
 
     std::unique_ptr<nlohmann::json> env;
 
@@ -32,8 +33,9 @@ int main(int argc, char* argv[]) {
     }
 
     socket_endpoint endpoint;
+    std::thread* awaiting = nullptr;
 
-    endpoint.set_on_connect_listener([&endpoint]() {
+    endpoint.set_on_connect_listener([&]() {
         if (endpoint.get_metadata()->get_status() !=
             connection_metadata::connection_status::open) {
             std::cerr << "Couldn't connect to specified 'uri'\n";
@@ -41,9 +43,32 @@ int main(int argc, char* argv[]) {
             return;
         }
 
-        std::cout << "Hello, World!\n";
+        endpoint.set_on_message_listener([&](nlohmann::json const& payload) {
+            std::cout << "Message received!\n" << payload << '\n';
 
-        endpoint.close();
+            if (awaiting != nullptr) {
+                awaiting->detach();
+            }
+
+            awaiting = new std::thread([payload, &endpoint]() {
+                auto type      = payload["type"].get<std::string>();
+                auto device_id = payload["deviceId"].get<int>();
+
+                nlohmann::json someval;
+
+                someval["deviceId"] = device_id;
+                someval["record"]   = rand() % 100;
+                someval["type"]     = type;
+
+                std::this_thread::sleep_for(std::chrono::seconds(5));
+
+                std::cout << "Sending back.\n" << someval << "\n";
+
+                endpoint.send(someval);
+            });
+        });
+
+        std::cout << "Hello, World!\n";
     });
     endpoint.connect(socket_uri, jwt);
     endpoint.join();

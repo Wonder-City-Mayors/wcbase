@@ -5,6 +5,8 @@
 #include "httplib.h"
 #include "nlohmann/json.hpp"
 
+#include <cstdlib>
+#include <ctime>
 #include <exception>
 #include <fstream>
 #include <memory>
@@ -48,5 +50,9 @@ namespace bootstrap {
         }
 
         return body["jwt"].get<std::string>();
+    }
+
+    auto setup_random() {
+        srand(time(NULL));
     }
 }    // namespace bootstrap

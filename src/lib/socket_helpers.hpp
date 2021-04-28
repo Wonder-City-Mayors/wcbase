@@ -61,8 +61,9 @@ class connection_metadata {
 class socket_endpoint {
     socket_client endpoint;
     std::shared_ptr<std::thread> thread;
-    std::shared_ptr<connection_metadata> metadata = nullptr;
-    std::function<void()>* on_connect             = nullptr;
+    std::shared_ptr<connection_metadata> metadata                  = nullptr;
+    std::function<void()>* on_connect                              = nullptr;
+    std::function<void(nlohmann::json const& payload)>* on_message = nullptr;
 
    public:
     static constexpr auto CONNECTION_ERROR = -1;
@@ -108,6 +109,12 @@ class socket_endpoint {
                       this,
                       websocketpp::lib::placeholders::_1));
 
+        connection->set_message_handler(
+            std::bind(&socket_endpoint::on_message_handler,
+                      this,
+                      websocketpp::lib::placeholders::_1,
+                      websocketpp::lib::placeholders::_2));
+
         if (!jwt.empty()) {
             connection->append_header("Authorization",
                                       std::string("Bearer ") + jwt);
@@ -135,6 +142,24 @@ class socket_endpoint {
         on_connect = new std::function(new_listener);
     }
 
+    void set_on_message_listener(
+        std::function<void(nlohmann::json const& payload)> new_listener) {
+        on_message = new std::function(new_listener);
+    }
+
+    void send(nlohmann::json const& message) {
+        std::error_code ec;
+
+        endpoint.send(metadata->get_handle(),
+                      message.dump(),
+                      websocketpp::frame::opcode::text,
+                      ec);
+
+        if (ec) {
+            throw std::runtime_error(ec.message());
+        }
+    }
+
     void join() {
         thread->join();
     }
@@ -143,16 +168,24 @@ class socket_endpoint {
     void on_open(websocketpp::connection_hdl arg_handle) {
         this->metadata->on_open(&this->endpoint, arg_handle);
 
-        if (this->on_connect != nullptr) {
-            (*this->on_connect)();
+        if (on_connect != nullptr) {
+            (*on_connect)();
         }
     }
 
     void on_fail(websocketpp::connection_hdl arg_handle) {
         this->metadata->on_fail(&this->endpoint, arg_handle);
 
-        if (this->on_connect != nullptr) {
-            (*this->on_connect)();
+        if (on_connect != nullptr) {
+            (*on_connect)();
+        }
+    }
+
+    void on_message_handler(
+        websocketpp::connection_hdl arg_handle,
+        std::shared_ptr<websocketpp::config::core_client::message_type> mt) {
+        if (on_message != nullptr) {
+            (*on_message)(nlohmann::json::parse(mt->get_payload()));
         }
     }
 };
