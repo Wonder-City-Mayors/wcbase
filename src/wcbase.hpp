@@ -13,3 +13,5 @@
     defined(__WIN32) && !defined(__CYGWIN__)
     #include <windows.h>
 #endif
+
+#define END_CHAR '\0'
