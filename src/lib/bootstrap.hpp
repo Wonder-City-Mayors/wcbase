@@ -53,10 +53,10 @@ namespace bootstrap {
     }
 
     auto get_jwt(nlohmann::json const& env) {
-        auto api_uri = env["api_uri"];
+        auto api_uri = env["apiUri"];
 
         if (api_uri.is_null()) {
-            throw std::runtime_error("No 'api_uri' field in .env.json.");
+            throw std::runtime_error("No 'apiUri' field in .env.json.");
         }
 
         nlohmann::json body;

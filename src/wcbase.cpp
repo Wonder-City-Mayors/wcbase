@@ -39,10 +39,10 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    auto const socket_uri = (*env)["socket_uri"];
+    auto const socket_uri = (*env)["socketUri"];
 
     if (socket_uri.is_null()) {
-        std::cerr << "No 'socket_uri' provided in .env.json\n";
+        std::cerr << "No 'socketUri' provided in .env.json\n";
         return 0;
     }
 
