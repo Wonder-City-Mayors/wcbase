@@ -7,6 +7,8 @@ add_executable (
 )
 
 set_property(TARGET wcbase PROPERTY CXX_STANDARD 17)
+set_property(TARGET wcbase PROPERTY
+	MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
 
 target_include_directories(
 	wcbase

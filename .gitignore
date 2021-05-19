@@ -4,3 +4,5 @@ out/
 include/conan/
 .vscode/
 build/
+.vs/
+out/
